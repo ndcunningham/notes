@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 
+// Color classes for notes
 const colorCls = {
   yellow: 'bg-noteYellow',
   pink: 'bg-notePink',
@@ -17,7 +18,6 @@ interface NoteProps {
   initialHeight: number;
   initialContent: string;
   zIndex: number;
-  onDelete: (id: string) => void;
   onBringToFront: (id: string) => void;
   onPositionChange: (id: string, x: number, y: number) => void;
   onSizeChange: (id: string, width: number, height: number) => void;
@@ -27,7 +27,7 @@ interface NoteProps {
   onTrashZoneDrop: (id: string) => void;
 }
 
-export function Note({ id, color, initialX, initialY, initialWidth, initialHeight, initialContent, zIndex, onDelete, onBringToFront, onPositionChange, onSizeChange, onContentChange, onTrashZoneEnter, onTrashZoneLeave, onTrashZoneDrop }: NoteProps) {
+export function Note({ id, color, initialX, initialY, initialWidth, initialHeight, initialContent, zIndex, onBringToFront, onPositionChange, onSizeChange, onContentChange, onTrashZoneEnter, onTrashZoneLeave, onTrashZoneDrop }: NoteProps) {
   const [entered, setEntered] = useState(false);
   const [position, setPosition] = useState({ x: initialX, y: initialY });
   const [size, setSize] = useState({ width: initialWidth, height: initialHeight });

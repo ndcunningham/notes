@@ -105,9 +105,6 @@ export function App() {
     setMaxZIndex(newZIndex);
   }, [maxZIndex]);
 
-  const deleteNote = useCallback((id: string) => {
-    setNotes(prev => prev.filter(note => note.id !== id));
-  }, []);
 
   const bringToFront = useCallback((id: string) => {
     setNotes(prev => {
@@ -181,7 +178,6 @@ export function App() {
               initialHeight={note.height}
               initialContent={note.content}
               zIndex={note.zIndex}
-              onDelete={deleteNote}
               onBringToFront={bringToFront}
               onPositionChange={updateNotePosition}
               onSizeChange={updateNoteSize}
