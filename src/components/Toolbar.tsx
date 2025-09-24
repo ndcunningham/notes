@@ -1,6 +1,10 @@
 import { useState } from 'react';
 
-export function Toolbar() {
+interface ToolbarProps {
+  onCreateNote: (color: string) => void;
+}
+
+export function Toolbar({ onCreateNote }: ToolbarProps) {
   const [color, setColor] = useState('yellow');
   const colors: Array<[string, string]> = [
     ['yellow', 'bg-noteYellow'],
@@ -13,7 +17,7 @@ export function Toolbar() {
 
   return (
     <div className="sticky top-0 z-50 flex items-center gap-3 bg-panel px-4 py-3 shadow">
-      <button onClick={() => {}} className="inline-flex items-center gap-2 rounded-xl bg-neutral-900 px-3 py-2 text-white active:translate-y-px">
+      <button onClick={() => onCreateNote(color)} className="inline-flex items-center gap-2 rounded-xl bg-neutral-900 px-3 py-2 text-white active:translate-y-px">
         ➕ New Note
       </button>
       <div className="flex items-center gap-2">

@@ -8,9 +8,17 @@ const colorCls = {
   purple: 'bg-notePurple',
 } as any;
 
-export function Note() {
+interface NoteProps {
+  id: string;
+  color: string;
+  initialX: number;
+  initialY: number;
+  onDelete: (id: string) => void;
+}
+
+export function Note({ id, color, initialX, initialY, onDelete }: NoteProps) {
   const [entered, setEntered] = useState(false);
-  const [position, setPosition] = useState({ x: 16, y: 16 });
+  const [position, setPosition] = useState({ x: initialX, y: initialY });
   const [size, setSize] = useState({ width: 180, height: 120 });
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
@@ -97,7 +105,7 @@ export function Note() {
   return (
     <div
         ref={noteRef}
-        className={`absolute select-none rounded-xl p-2 shadow-note outline-none bg-noteYellow flex flex-col ${
+        className={`absolute select-none rounded-xl p-2 shadow-note outline-none ${colorCls[color]} flex flex-col ${
           isDragging || isResizing ? 'transition-none' : 'transition-all duration-150'
         } ${entered ? 'opacity-100 scale-100' : 'opacity-0 scale-[0.98]'}`}
         style={{
@@ -119,6 +127,7 @@ export function Note() {
           <button
             className="rounded p-1 text-neutral-700 hover:bg-black/5"
             aria-label="Delete"
+            onClick={() => onDelete(id)}
           >
             ✖
           </button>
