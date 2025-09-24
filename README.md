@@ -1,7 +1,7 @@
 # Nicholas Sticky Notes
 
 ## Overview
-Nicholas Sticky Notes is a modern, interactive sticky notes application built with React, TypeScript and Tailwind. The app provides a workspace that users can create, organize, and manage virtual sticky notes just like physical ones on a desk.
+Nicholas Sticky Notes is a an interactive sticky notes application built with React, TypeScript and Tailwind. The app provides a workspace that users can create, organize, and manage virtual sticky notes just like physical ones on a desk.
 
 The application features drag-and-drop functionality, allowing users to position notes anywhere on the canvas. Each note can be resized to accommodate different amounts of content and comes in multiple color options (yellow, pink, blue, green, purple) for visual organization. Notes automatically save their content, position, and appearance to localStorage, that ensures your notes are persisted between sessions.
 
