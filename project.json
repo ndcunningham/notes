@@ -1,0 +1,10 @@
+{
+  "name": "nicholas-sticky-notes",
+  "$schema": "node_modules/nx/schemas/project-schema.json",
+  "includedScripts": [],
+  "sourceRoot": "./src",
+  "projectType": "application",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project nicholas-sticky-notes --web",
+  "targets": {}
+}
