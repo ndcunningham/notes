@@ -13,10 +13,12 @@ interface NoteProps {
   color: string;
   initialX: number;
   initialY: number;
+  zIndex: number;
   onDelete: (id: string) => void;
+  onBringToFront: (id: string) => void;
 }
 
-export function Note({ id, color, initialX, initialY, onDelete }: NoteProps) {
+export function Note({ id, color, initialX, initialY, zIndex, onDelete, onBringToFront }: NoteProps) {
   const [entered, setEntered] = useState(false);
   const [position, setPosition] = useState({ x: initialX, y: initialY });
   const [size, setSize] = useState({ width: 180, height: 120 });
@@ -84,6 +86,7 @@ export function Note({ id, color, initialX, initialY, onDelete }: NoteProps) {
   }, [isDragging, isResizing, dragStart, resizeStart, size, position]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    onBringToFront(id);
     setDragStart({
       x: e.clientX - position.x,
       y: e.clientY - position.y
@@ -93,6 +96,7 @@ export function Note({ id, color, initialX, initialY, onDelete }: NoteProps) {
 
   const handleResizeMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation();
+    onBringToFront(id);
     setResizeStart({
       x: e.clientX,
       y: e.clientY,
@@ -112,7 +116,8 @@ export function Note({ id, color, initialX, initialY, onDelete }: NoteProps) {
           left: `${position.x}px`,
           top: `${position.y}px`,
           width: `${size.width}px`,
-          height: `${size.height}px`
+          height: `${size.height}px`,
+          zIndex: zIndex
         }}
         role="group"
         aria-label="Sticky note"
