@@ -47,12 +47,16 @@ describe('Sticky Notes App - Core Tests', () => {
     expect(screen.getAllByPlaceholderText('Type here...')).toHaveLength(1);
 
     // Select blue color and create new note
-    await user.click(screen.getByLabelText('color blue'));
+    await user.click(screen.getByLabelText('Select blue color'));
     await user.click(screen.getByText('➕ New Note'));
+
+    // Click on workspace to place the note
+    const workspace = screen.getByRole('main', { name: 'Notes workspace' });
+    await user.click(workspace);
 
     // Should have 2 notes, with new one being blue
     expect(screen.getAllByPlaceholderText('Type here...')).toHaveLength(2);
-    const notes = screen.getAllByRole('group', { name: 'Sticky note' });
+    const notes = screen.getAllByRole('region', { name: /sticky note/ });
     const newNote = notes[notes.length - 1];
     expect(newNote).toHaveClass('bg-noteBlue');
   });
@@ -103,6 +107,6 @@ describe('Sticky Notes App - Core Tests', () => {
 
     // Should render the saved note with its content
     expect(screen.getByDisplayValue('My saved note')).toBeInTheDocument();
-    expect(screen.getByRole('group', { name: 'Sticky note' })).toHaveClass('bg-notePink');
+    expect(screen.getByRole('region', { name: /sticky note/ })).toHaveClass('bg-notePink');
   });
 });

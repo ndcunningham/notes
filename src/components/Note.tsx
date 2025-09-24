@@ -18,6 +18,7 @@ interface NoteProps {
   initialHeight: number;
   initialContent: string;
   zIndex: number;
+  isPlacementMode: boolean;
   onBringToFront: (id: string) => void;
   onPositionChange: (id: string, x: number, y: number) => void;
   onSizeChange: (id: string, width: number, height: number) => void;
@@ -27,7 +28,7 @@ interface NoteProps {
   onTrashZoneDrop: (id: string) => void;
 }
 
-export function Note({ id, color, initialX, initialY, initialWidth, initialHeight, initialContent, zIndex, onBringToFront, onPositionChange, onSizeChange, onContentChange, onTrashZoneEnter, onTrashZoneLeave, onTrashZoneDrop }: NoteProps) {
+export function Note({ id, color, initialX, initialY, initialWidth, initialHeight, initialContent, zIndex, isPlacementMode, onBringToFront, onPositionChange, onSizeChange, onContentChange, onTrashZoneEnter, onTrashZoneLeave, onTrashZoneDrop }: NoteProps) {
   const [entered, setEntered] = useState(false);
   const [position, setPosition] = useState({ x: initialX, y: initialY });
   const [size, setSize] = useState({ width: initialWidth, height: initialHeight });
@@ -166,6 +167,7 @@ export function Note({ id, color, initialX, initialY, initialWidth, initialHeigh
   }, [isDragging, isResizing, dragStart, resizeStart, size, position]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    if (isPlacementMode) return; // Don't handle drag during placement mode
     onBringToFront(id);
     setDragStart({
       x: e.clientX - position.x,
@@ -175,6 +177,7 @@ export function Note({ id, color, initialX, initialY, initialWidth, initialHeigh
   };
 
   const handleResizeMouseDown = (e: React.MouseEvent) => {
+    if (isPlacementMode) return; // Don't handle resize during placement mode
     e.stopPropagation();
     onBringToFront(id);
     setResizeStart({
@@ -198,7 +201,7 @@ export function Note({ id, color, initialX, initialY, initialWidth, initialHeigh
           isDragging || isResizing ? 'transition-none' : 'transition-all duration-150'
         } ${entered ? 'opacity-100 scale-100' : 'opacity-0 scale-[0.98]'} ${
           isOverTrash ? 'scale-90 opacity-75 ring-2 ring-red-500/10' : ''
-        }`}
+        } ${isPlacementMode ? 'pointer-events-none opacity-50' : ''}`}
         style={{
           left: `${position.x}px`,
           top: `${position.y}px`,
@@ -206,29 +209,50 @@ export function Note({ id, color, initialX, initialY, initialWidth, initialHeigh
           height: `${size.height}px`,
           zIndex: zIndex
         }}
-        role="group"
-        aria-label="Sticky note"
+        role="region"
+        aria-label={`${color} sticky note`}
+        aria-describedby={`note-content-${id}`}
       >
         <div
           className={`flex items-center justify-between gap-2 rounded-lg px-1 py-0.5 text-[11px] font-semibold text-neutral-700 ${
             isDragging ? 'cursor-grabbing' : 'cursor-grab'
           }`}
           onMouseDown={handleMouseDown}
+          role="button"
+          tabIndex={0}
+          aria-label="Drag to move note"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              onBringToFront(id);
+            }
+          }}
         >
           <div>Note</div>
         </div>
         <div className="mt-1 flex-1 min-h-0">
           <textarea
+            id={`note-content-${id}`}
             className="h-full w-full resize-none bg-transparent outline-none transition-[background] focus:bg-white/30"
             placeholder="Type here..."
             value={content}
             onChange={handleContentChange}
+            aria-label="Note content"
+            rows={4}
           />
         </div>
         <div
-          title="Resize"
+          title="Resize note"
           className="absolute right-1 bottom-1 h-3 w-3 cursor-nwse-resize border-b-2 border-r-2 border-black/30"
           onMouseDown={handleResizeMouseDown}
+          role="button"
+          tabIndex={0}
+          aria-label="Resize note"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onBringToFront(id);
+            }
+          }}
         />
       </div>
   );

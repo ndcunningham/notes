@@ -6,7 +6,8 @@ Nicholas Sticky Notes is a modern, interactive sticky notes application built wi
 The application features drag-and-drop functionality, allowing users to position notes anywhere on the canvas. Each note can be resized to accommodate different amounts of content and comes in multiple color options (yellow, pink, blue, green, purple) for visual organization. Notes automatically save their content, position, and appearance to localStorage, that ensures your notes are persisted between sessions.
 
 ## Features
-- **Smooth Drag & Drop**: Click and drag notes to reposition them anywhere on the workspace
+- **Create Note**: Click ` + New Note` button to add a new Note choosing from 3 sizes (S, M, L). Placing the note wherever you want afterwards.
+- **Drag & Drop**: Click and drag notes to reposition them anywhere on the workspace
 - **Resizable Notes**: Adjust note dimensions using the resize handle in the bottom-right corner
 - **Color Coding**: Choose from 5 different note colors for visual organization
 - **Persistent Storage**: Notes automatically save to localStorage with simulated backend delays

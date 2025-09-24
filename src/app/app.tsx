@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Note } from '../components/Note';
 import { Toolbar } from '../components/Toolbar';
 import { TrashZone } from '../components/TrashZone';
+import { PlacementPreview } from '../components/PlacementPreview';
 
 interface NoteData {
   id: string;
@@ -50,6 +51,17 @@ export function App() {
   const [maxZIndex, setMaxZIndex] = useState(1);
   const [trashZoneActive, setTrashZoneActive] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [placementMode, setPlacementMode] = useState<{
+    active: boolean;
+    color: string;
+    width: number;
+    height: number;
+  } | null>(null);
+
+  // Refs for DOM elements
+  const toolbarRef = useRef<HTMLDivElement>(null);
+  const trashZoneRef = useRef<HTMLDivElement>(null);
+  const workspaceRef = useRef<HTMLDivElement>(null);
 
   // Hydrate app on load
   useEffect(() => {
@@ -151,11 +163,108 @@ export function App() {
     ));
   }, []);
 
+  const createNoteAtPosition = useCallback((x: number, y: number, color: string, width: number, height: number) => {
+    const newZIndex = maxZIndex + 1;
+    const newNote: NoteData = {
+      id: Date.now().toString(),
+      color,
+      x,
+      y,
+      width,
+      height,
+      content: '',
+      zIndex: newZIndex
+    };
+    setNotes(prev => [...prev, newNote]);
+    setMaxZIndex(newZIndex);
+    setPlacementMode(null);
+  }, [maxZIndex]);
+
+  const startPlacementMode = useCallback((color: string, width: number, height: number) => {
+    setPlacementMode({ active: true, color, width, height });
+  }, []);
+
+  const cancelPlacementMode = useCallback(() => {
+    setPlacementMode(null);
+  }, []);
+
+  // Handle ESC key to cancel placement mode and document clicks for placement
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && placementMode?.active) {
+        cancelPlacementMode();
+      }
+    };
+
+    const handleDocumentClick = (e: MouseEvent) => {
+      if (!placementMode?.active) return;
+
+      // Check if click is within the workspace area (not toolbar or trash zone)
+      const target = e.target as HTMLElement;
+
+      if (toolbarRef.current?.contains(target) || trashZoneRef.current?.contains(target)) {
+        return;
+      }
+
+      // Get workspace bounds
+      if (!workspaceRef.current) return;
+
+      const rect = workspaceRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left - 16; // Account for padding
+      const y = e.clientY - rect.top - 16;  // Account for padding
+
+      // Constrain position within bounds
+      const containerWidth = window.innerWidth - 32; // Account for padding
+      const containerHeight = window.innerHeight - 200; // Account for toolbar and padding
+
+      const constrainedX = Math.max(0, Math.min(x, containerWidth - placementMode.width));
+      const constrainedY = Math.max(0, Math.min(y, containerHeight - placementMode.height));
+
+      createNoteAtPosition(constrainedX, constrainedY, placementMode.color, placementMode.width, placementMode.height);
+    };
+
+    if (placementMode?.active) {
+      document.addEventListener('keydown', handleKeyDown);
+      document.addEventListener('click', handleDocumentClick, true); // Use capture phase
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+        document.removeEventListener('click', handleDocumentClick, true);
+      };
+    }
+  }, [placementMode?.active, placementMode, cancelPlacementMode, createNoteAtPosition]);
+
+  const handleWorkspaceClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!placementMode?.active) {
+      return;
+    }
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left - 16; // Account for padding
+    const y = e.clientY - rect.top - 16;  // Account for padding
+
+    // Constrain position within bounds
+    const containerWidth = window.innerWidth - 32; // Account for padding
+    const containerHeight = window.innerHeight - 200; // Account for toolbar and padding
+
+    const constrainedX = Math.max(0, Math.min(x, containerWidth - placementMode.width));
+    const constrainedY = Math.max(0, Math.min(y, containerHeight - placementMode.height));
+
+    createNoteAtPosition(constrainedX, constrainedY, placementMode.color, placementMode.width, placementMode.height);
+  }, [placementMode, createNoteAtPosition]);
+
   if (isLoading) {
     return (
-      <div className="h-screen flex items-center justify-center mx-auto bg-neutral-50">
+      <div
+        className="h-screen flex items-center justify-center mx-auto bg-neutral-50"
+        role="main"
+        aria-label="Loading application"
+      >
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-neutral-300 border-t-neutral-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <div
+            className="w-12 h-12 border-4 border-neutral-300 border-t-neutral-600 rounded-full animate-spin mx-auto mb-4"
+            role="status"
+            aria-label="Loading spinner"
+          ></div>
           <h2 className="text-lg font-medium text-neutral-700 mb-2">Loading your notes...</h2>
           <p className="text-sm text-neutral-500">Syncing with backend</p>
         </div>
@@ -164,9 +273,22 @@ export function App() {
   }
 
   return (
-    <div className="grid h-full grid-rows-[auto_1fr]">
-        <Toolbar onCreateNote={createNote} />
-        <div className="relative p-4">
+    <div className="grid h-full grid-rows-[auto_1fr]" role="main" aria-label="Sticky notes application">
+        <Toolbar ref={toolbarRef} onCreateNote={createNote} onStartPlacement={startPlacementMode} />
+        <div
+          ref={workspaceRef}
+          className={`relative p-4 ${placementMode?.active ? 'cursor-crosshair' : ''}`}
+          role="main"
+          aria-label="Notes workspace"
+          onMouseDown={handleWorkspaceClick}
+        >
+          {placementMode?.active && (
+            <PlacementPreview
+              color={placementMode.color}
+              width={placementMode.width}
+              height={placementMode.height}
+            />
+          )}
           {notes.map(note => (
             <Note
               key={note.id}
@@ -178,6 +300,7 @@ export function App() {
               initialHeight={note.height}
               initialContent={note.content}
               zIndex={note.zIndex}
+              isPlacementMode={placementMode?.active || false}
               onBringToFront={bringToFront}
               onPositionChange={updateNotePosition}
               onSizeChange={updateNoteSize}
@@ -188,8 +311,8 @@ export function App() {
             />
           ))}
         </div>
-        <TrashZone isActive={trashZoneActive} />
-    </div>
+        <TrashZone ref={trashZoneRef} isActive={trashZoneActive} isPlacementMode={placementMode?.active} />
+   </div>
   );
 }
 
