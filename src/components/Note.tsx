@@ -16,9 +16,12 @@ interface NoteProps {
   zIndex: number;
   onDelete: (id: string) => void;
   onBringToFront: (id: string) => void;
+  onTrashZoneEnter: () => void;
+  onTrashZoneLeave: () => void;
+  onTrashZoneDrop: (id: string) => void;
 }
 
-export function Note({ id, color, initialX, initialY, zIndex, onDelete, onBringToFront }: NoteProps) {
+export function Note({ id, color, initialX, initialY, zIndex, onDelete, onBringToFront, onTrashZoneEnter, onTrashZoneLeave, onTrashZoneDrop }: NoteProps) {
   const [entered, setEntered] = useState(false);
   const [position, setPosition] = useState({ x: initialX, y: initialY });
   const [size, setSize] = useState({ width: 180, height: 120 });
@@ -26,12 +29,40 @@ export function Note({ id, color, initialX, initialY, zIndex, onDelete, onBringT
   const [isResizing, setIsResizing] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
+  const [isOverTrash, setIsOverTrash] = useState(false);
   const noteRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setEntered(true));
     return () => cancelAnimationFrame(id);
   }, []);
+
+  const checkTrashZoneOverlap = (x: number, y: number) => {
+    const trashZone = document.getElementById('trash-zone');
+    if (!trashZone || !noteRef.current) return false;
+
+    const container = noteRef.current.offsetParent as HTMLElement;
+    if (!container) return false;
+
+    const trashRect = trashZone.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+
+    // Convert note position to viewport coordinates
+    const noteViewportX = containerRect.left + x;
+    const noteViewportY = containerRect.top + y;
+    const noteBottom = noteViewportY + size.height;
+    const noteRight = noteViewportX + size.width;
+
+    // Check if note overlaps with trash zone
+    const isOverlapping = (
+      noteViewportX < trashRect.right &&
+      noteRight > trashRect.left &&
+      noteViewportY < trashRect.bottom &&
+      noteBottom > trashRect.top
+    );
+
+    return isOverlapping;
+  };
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -48,6 +79,17 @@ export function Note({ id, color, initialX, initialY, zIndex, onDelete, onBringT
         const constrainedY = Math.max(0, Math.min(newY, containerHeight - size.height));
 
         setPosition({ x: constrainedX, y: constrainedY });
+
+        // Check trash zone overlap
+        const isCurrentlyOverTrash = checkTrashZoneOverlap(constrainedX, constrainedY);
+
+        if (isCurrentlyOverTrash && !isOverTrash) {
+          setIsOverTrash(true);
+          onTrashZoneEnter();
+        } else if (!isCurrentlyOverTrash && isOverTrash) {
+          setIsOverTrash(false);
+          onTrashZoneLeave();
+        }
       }
 
       if (isResizing) {
@@ -70,8 +112,20 @@ export function Note({ id, color, initialX, initialY, zIndex, onDelete, onBringT
     };
 
     const handleMouseUp = () => {
+      if (isDragging && isOverTrash) {
+        // Note is being dropped on trash zone
+        onTrashZoneDrop(id);
+        return; // Note will be deleted, no need to continue
+      }
+
       setIsDragging(false);
       setIsResizing(false);
+
+      // Reset trash zone state
+      if (isOverTrash) {
+        setIsOverTrash(false);
+        onTrashZoneLeave();
+      }
     };
 
     if (isDragging || isResizing) {
@@ -111,7 +165,9 @@ export function Note({ id, color, initialX, initialY, zIndex, onDelete, onBringT
         ref={noteRef}
         className={`absolute select-none rounded-xl p-2 shadow-note outline-none ${colorCls[color]} flex flex-col ${
           isDragging || isResizing ? 'transition-none' : 'transition-all duration-150'
-        } ${entered ? 'opacity-100 scale-100' : 'opacity-0 scale-[0.98]'}`}
+        } ${entered ? 'opacity-100 scale-100' : 'opacity-0 scale-[0.98]'} ${
+          isOverTrash ? 'scale-90 opacity-75 ring-2 ring-red-500/10' : ''
+        }`}
         style={{
           left: `${position.x}px`,
           top: `${position.y}px`,
@@ -129,13 +185,6 @@ export function Note({ id, color, initialX, initialY, zIndex, onDelete, onBringT
           onMouseDown={handleMouseDown}
         >
           <div>Note</div>
-          <button
-            className="rounded p-1 text-neutral-700 hover:bg-black/5"
-            aria-label="Delete"
-            onClick={() => onDelete(id)}
-          >
-            ✖
-          </button>
         </div>
         <div className="mt-1 flex-1 min-h-0">
           <textarea

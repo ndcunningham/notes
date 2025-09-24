@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Note } from '../components/Note';
 import { Toolbar } from '../components/Toolbar';
+import { TrashZone } from '../components/TrashZone';
 
 interface NoteData {
   id: string;
@@ -15,6 +16,7 @@ export function App() {
     { id: '1', color: 'yellow', x: 16, y: 16, zIndex: 1 }
   ]);
   const [maxZIndex, setMaxZIndex] = useState(1);
+  const [trashZoneActive, setTrashZoneActive] = useState(false);
 
   const createNote = (color: string) => {
     const newZIndex = maxZIndex + 1;
@@ -47,6 +49,19 @@ export function App() {
     });
   };
 
+  const handleTrashZoneEnter = () => {
+    setTrashZoneActive(true);
+  };
+
+  const handleTrashZoneLeave = () => {
+    setTrashZoneActive(false);
+  };
+
+  const handleTrashZoneDrop = (id: string) => {
+    deleteNote(id);
+    setTrashZoneActive(false);
+  };
+
   return (
     <div className="grid h-full grid-rows-[auto_1fr]">
         <Toolbar onCreateNote={createNote} />
@@ -61,10 +76,13 @@ export function App() {
               zIndex={note.zIndex}
               onDelete={deleteNote}
               onBringToFront={bringToFront}
+              onTrashZoneEnter={handleTrashZoneEnter}
+              onTrashZoneLeave={handleTrashZoneLeave}
+              onTrashZoneDrop={handleTrashZoneDrop}
             />
           ))}
         </div>
-
+        <TrashZone isActive={trashZoneActive} />
     </div>
   );
 }
