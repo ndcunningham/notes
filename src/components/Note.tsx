@@ -13,18 +13,25 @@ interface NoteProps {
   color: string;
   initialX: number;
   initialY: number;
+  initialWidth: number;
+  initialHeight: number;
+  initialContent: string;
   zIndex: number;
   onDelete: (id: string) => void;
   onBringToFront: (id: string) => void;
+  onPositionChange: (id: string, x: number, y: number) => void;
+  onSizeChange: (id: string, width: number, height: number) => void;
+  onContentChange: (id: string, content: string) => void;
   onTrashZoneEnter: () => void;
   onTrashZoneLeave: () => void;
   onTrashZoneDrop: (id: string) => void;
 }
 
-export function Note({ id, color, initialX, initialY, zIndex, onDelete, onBringToFront, onTrashZoneEnter, onTrashZoneLeave, onTrashZoneDrop }: NoteProps) {
+export function Note({ id, color, initialX, initialY, initialWidth, initialHeight, initialContent, zIndex, onDelete, onBringToFront, onPositionChange, onSizeChange, onContentChange, onTrashZoneEnter, onTrashZoneLeave, onTrashZoneDrop }: NoteProps) {
   const [entered, setEntered] = useState(false);
   const [position, setPosition] = useState({ x: initialX, y: initialY });
-  const [size, setSize] = useState({ width: 180, height: 120 });
+  const [size, setSize] = useState({ width: initialWidth, height: initialHeight });
+  const [content, setContent] = useState(initialContent);
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
@@ -33,9 +40,28 @@ export function Note({ id, color, initialX, initialY, zIndex, onDelete, onBringT
   const noteRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const id = requestAnimationFrame(() => setEntered(true));
-    return () => cancelAnimationFrame(id);
+    const frameId = requestAnimationFrame(() => setEntered(true));
+    return () => cancelAnimationFrame(frameId);
   }, []);
+
+
+  useEffect(() => {
+    if (position.x !== initialX || position.y !== initialY) {
+      onPositionChange(id, position.x, position.y);
+    }
+  }, [position.x, position.y, id, onPositionChange, initialX, initialY]);
+
+  useEffect(() => {
+    if (size.width !== initialWidth || size.height !== initialHeight) {
+      onSizeChange(id, size.width, size.height);
+    }
+  }, [size.width, size.height, id, onSizeChange, initialWidth, initialHeight]);
+
+  useEffect(() => {
+    if (content !== initialContent) {
+      onContentChange(id, content);
+    }
+  }, [content, id, onContentChange, initialContent]);
 
   const checkTrashZoneOverlap = (x: number, y: number) => {
     const trashZone = document.getElementById('trash-zone');
@@ -160,6 +186,11 @@ export function Note({ id, color, initialX, initialY, zIndex, onDelete, onBringT
     setIsResizing(true);
   };
 
+  // We could also debounce this if performance becomes an issue or save it on blur
+  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setContent(e.target.value);
+  };
+
   return (
     <div
         ref={noteRef}
@@ -190,6 +221,8 @@ export function Note({ id, color, initialX, initialY, zIndex, onDelete, onBringT
           <textarea
             className="h-full w-full resize-none bg-transparent outline-none transition-[background] focus:bg-white/30"
             placeholder="Type here..."
+            value={content}
+            onChange={handleContentChange}
           />
         </div>
         <div
