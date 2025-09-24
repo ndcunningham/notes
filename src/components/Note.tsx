@@ -28,15 +28,32 @@ export function Note() {
       if (isDragging) {
         const newX = e.clientX - dragStart.x;
         const newY = e.clientY - dragStart.y;
-        setPosition({ x: newX, y: newY });
+
+        // Get container bounds
+        const containerWidth = window.innerWidth;
+        const containerHeight = window.innerHeight;
+
+        // Constrain position within container
+        const constrainedX = Math.max(0, Math.min(newX, containerWidth - size.width));
+        const constrainedY = Math.max(0, Math.min(newY, containerHeight - size.height));
+
+        setPosition({ x: constrainedX, y: constrainedY });
       }
 
       if (isResizing) {
         const deltaX = e.clientX - resizeStart.x;
         const deltaY = e.clientY - resizeStart.y;
 
-        const newWidth = Math.max(140, resizeStart.width + deltaX);
-        const newHeight = Math.max(100, resizeStart.height + deltaY);
+        // Get container bounds
+        const containerWidth = window.innerWidth;
+        const containerHeight = window.innerHeight;
+
+        // Calculate max size based on current position
+        const maxWidth = containerWidth - position.x;
+        const maxHeight = containerHeight - position.y;
+
+        const newWidth = Math.max(140, Math.min(resizeStart.width + deltaX, maxWidth));
+        const newHeight = Math.max(100, Math.min(resizeStart.height + deltaY, maxHeight));
 
         setSize({ width: newWidth, height: newHeight });
       }
@@ -56,7 +73,7 @@ export function Note() {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, isResizing, dragStart, resizeStart]);
+  }, [isDragging, isResizing, dragStart, resizeStart, size, position]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setDragStart({

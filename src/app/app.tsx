@@ -5,7 +5,7 @@ export function App() {
   return (
     <div className="grid h-full grid-rows-[auto_1fr]">
         <Toolbar />
-        <div className="relative">
+        <div className="relative p-4">
           <Note />
         </div>
         
